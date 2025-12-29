@@ -1,4 +1,4 @@
-# EEG Eye State Prediction App
+# EEG Eye State Prediction App 11
 
 This is a simple web app that predicts whether a person's eyes are open or closed using EEG signals.  
 The app uses a machine learning model trained on the EEG Eye State dataset.

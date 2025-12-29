@@ -1,43 +1,74 @@
 import streamlit as st
 import pickle
 import numpy as np
+import pandas as pd
+import os
 
-# Load model and scaler
-with open("best_eeg_model.pkl", "rb") as file:
+# -----------------------------
+# Load model and scaler safely
+# -----------------------------
+current_dir = os.path.dirname(__file__)
+model_path = os.path.join(current_dir, "best_eeg_model.pkl")
+scaler_path = os.path.join(current_dir, "scaler.pkl")
+
+with open(model_path, "rb") as file:
     model = pickle.load(file)
 
-with open("scaler.pkl", "rb") as file:
+with open(scaler_path, "rb") as file:
     scaler = pickle.load(file)
 
-# App title
+# -----------------------------
+# Streamlit App Title
+# -----------------------------
 st.title("🧠 EEG Eye State Prediction App")
+st.write("Predict if eyes are open or closed using EEG signals.")
 
-st.write("Enter EEG signal values to predict eye state.")
+# -----------------------------
+# Sidebar for manual input
+# -----------------------------
+st.sidebar.header("Manual Input")
+AF3 = st.sidebar.number_input("AF3")
+F7 = st.sidebar.number_input("F7")
+F3 = st.sidebar.number_input("F3")
+FC5 = st.sidebar.number_input("FC5")
+T7 = st.sidebar.number_input("T7")
+P7 = st.sidebar.number_input("P7")
+O1 = st.sidebar.number_input("O1")
+O2 = st.sidebar.number_input("O2")
+P8 = st.sidebar.number_input("P8")
+T8 = st.sidebar.number_input("T8")
+FC6 = st.sidebar.number_input("FC6")
+F4 = st.sidebar.number_input("F4")
+F8 = st.sidebar.number_input("F8")
+AF4 = st.sidebar.number_input("AF4")
 
-# Input fields (14 EEG channels)
-AF3 = st.number_input("AF3", value=0.0)
-F7 = st.number_input("F7", value=0.0)
-F3 = st.number_input("F3", value=0.0)
-FC5 = st.number_input("FC5", value=0.0)
-T7 = st.number_input("T7", value=0.0)
-P7 = st.number_input("P7", value=0.0)
-O1 = st.number_input("O1", value=0.0)
-O2 = st.number_input("O2", value=0.0)
-P8 = st.number_input("P8", value=0.0)
-T8 = st.number_input("T8", value=0.0)
-FC6 = st.number_input("FC6", value=0.0)
-F4 = st.number_input("F4", value=0.0)
-F8 = st.number_input("F8", value=0.0)
-AF4 = st.number_input("AF4", value=0.0)
+manual_input = np.array([[AF3, F7, F3, FC5, T7, P7, O1, O2, P8, T8, FC6, F4, F8, AF4]])
 
-# Predict button
-if st.button("Predict Eye State"):
+# -----------------------------
+# CSV Upload Option
+# -----------------------------
+st.header("Or Upload CSV File")
+uploaded_file = st.file_uploader("Upload a CSV file with 14 EEG columns", type=["csv"])
 
-    input_data = np.array([[AF3, F7, F3, FC5, T7, P7, O1, O2, P8, T8, FC6, F4, F8, AF4]])
-    
-    scaled_data = scaler.transform(input_data)
-    prediction = model.predict(scaled_data)
+if uploaded_file is not None:
+    data = pd.read_csv(uploaded_file)
+    st.write("Uploaded Data:")
+    st.dataframe(data)
 
+    # Scale the data
+    scaled_data = scaler.transform(data)
+    predictions = model.predict(scaled_data)
+    data['Predicted Eye State'] = ['Closed' if i==1 else 'Open' for i in predictions]
+
+    st.write("Predictions:")
+    st.dataframe(data)
+
+# -----------------------------
+# Manual Prediction Button
+# -----------------------------
+if st.button("Predict Manual Input"):
+    scaled_manual = scaler.transform(manual_input)
+    prediction = model.predict(scaled_manual)
     if prediction[0] == 1:
         st.success("👁️ Eye Closed")
     else:
